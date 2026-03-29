@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dam Volume Master — 전국 댐 실시간 수량 계산기</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#050a15;color:#e0ecf8;font-family:'Noto Sans KR',sans-serif;padding:16px;min-height:100vh}
+.app{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.hdr{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(56,189,248,0.2);flex-wrap:wrap}
+.htitle{font-size:20px;font-weight:700;color:#38bdf8}
+.hsub{font-size:11px;color:#64748b;margin-top:2px}
+.live-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;border-radius:12px;background:rgba(29,158,117,0.2);color:#9FE1CB;font-weight:600;margin-left:auto}
+.pulse{display:inline-block;width:6px;height:6px;border-radius:50%;background:#1D9E75;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.tabs{display:flex;gap:4px;margin-left:12px}
+.tb{padding:5px 14px;border-radius:8px;border:1px solid #1e3a5f;background:transparent;color:#64748b;font-size:12px;cursor:pointer;transition:all 0.2s}
+.tb.active{background:rgba(56,189,248,0.15);border-color:#38bdf8;color:#38bdf8;font-weight:600}
+.sr{position:relative}
+.si{width:100%;padding:9px 12px 9px 34px;border:1px solid rgba(56,189,248,0.2);border-radius:10px;background:rgba(14,30,54,0.8);color:#e0ecf8;font-size:13px;outline:none}
+.si:focus{border-color:#38bdf8}
+.sic{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px}
+.body{display:grid;grid-template-columns:210px 1fr;gap:14px}
+@media(max-width:640px){.body{grid-template-columns:1fr}}
+.dl{display:flex;flex-direction:column;gap:3px;max-height:580px;overflow-y:auto}
+.di{padding:8px 10px;border-radius:8px;cursor:pointer;border:1px solid rgba(56,189,248,0.1);background:rgba(14,30,54,0.6)}
+.di:hover{border-color:rgba(56,189,248,0.3)}
+.di.active{border-color:#38bdf8;background:rgba(56,189,248,0.12)}
+.dn{font-size:12px;font-weight:600;color:#e0ecf8}
+.dm{font-size:10px;color:#64748b;margin-top:2px}
+.dc{font-size:10px;color:#38bdf8;font-weight:600;float:right}
+.slbl{font-size:10px;color:#475569;padding:4px 0 2px;border-top:1px solid rgba(56,189,248,0.1);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+.card{background:rgba(13,22,38,0.95);border:1px solid rgba(56,189,248,0.15);border-radius:12px;padding:14px;margin-bottom:10px}
+.ct{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}
+.stat{background:rgba(56,189,248,0.07);border-radius:8px;padding:7px;text-align:center}
+.sl{font-size:9px;color:#64748b}
+.sv{font-size:12px;font-weight:600;color:#38bdf8;margin-top:2px}
+.ir{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.li{flex:1;padding:8px 12px;border:1px solid rgba(56,189,248,0.25);border-radius:8px;background:#020b18;color:#e0ecf8;font-size:13px;outline:none}
+.li:focus{border-color:#38bdf8}
+.cb{padding:8px 14px;background:#185FA5;border:none;border-radius:8px;color:#B5D4F4;font-size:12px;font-weight:600;cursor:pointer}
+.cb:hover{background:#0C447C}
+.ctabs{display:flex;gap:3px;margin-bottom:6px}
+.ctb{padding:3px 9px;border-radius:8px;border:1px solid rgba(56,189,248,0.15);background:transparent;color:#64748b;font-size:10px;cursor:pointer}
+.ctb.active{background:rgba(56,189,248,0.1);border-color:#38bdf8;color:#38bdf8;font-weight:600}
+.rg3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
+.rm{background:rgba(56,189,248,0.07);border-radius:8px;padding:8px}
+.rl{font-size:9px;color:#64748b}
+.rv{font-size:15px;font-weight:600;color:#e0ecf8;margin-top:2px}
+.ru{font-size:10px;color:#64748b;margin-left:2px}
+.bw{margin-bottom:8px}
+.bl{display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:3px}
+.bb{height:6px;background:rgba(56,189,248,0.1);border-radius:3px;overflow:hidden}
+.bf{height:100%;border-radius:3px;transition:width .4s}
+.cl{display:flex;flex-direction:column;gap:3px}
+.ci{display:flex;justify-content:space-between;padding:5px 8px;background:rgba(56,189,248,0.05);border-radius:6px}
+.cil{font-size:11px;color:#94a3b8}
+.civ{font-size:11px;font-weight:600;color:#e0ecf8}
+.live-box{background:rgba(29,158,117,0.15);border:1px solid rgba(29,158,117,0.3);border-radius:8px;padding:8px 12px;font-size:11px;color:#9FE1CB;margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.wi{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(56,189,248,0.05);border-radius:8px;cursor:pointer;border:1px solid rgba(56,189,248,0.08);margin-bottom:4px}
+.wi:hover{background:rgba(56,189,248,0.1)}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px;color:#475569;font-size:13px;text-align:center;gap:10px;border:1px solid rgba(56,189,248,0.1);border-radius:12px}
+.alert-danger{background:rgba(162,45,45,0.15);border:1px solid rgba(240,149,149,0.3);border-radius:8px;padding:8px 12px;font-size:11px;color:#F09595;margin-bottom:8px}
+.dam-row{padding:8px 10px;border-radius:8px;border:1px solid rgba(56,189,248,0.1);background:rgba(14,30,54,0.6);margin-bottom:4px}
+.dam-row.danger{border-color:rgba(240,149,149,0.4);background:rgba(162,45,45,0.1)}
+.dam-row.warn{border-color:rgba(250,199,117,0.4);background:rgba(186,117,23,0.1)}
+.ftb{padding:3px 9px;border-radius:8px;border:1px solid rgba(56,189,248,0.15);background:transparent;color:#64748b;font-size:11px;cursor:pointer}
+.ftb.active{background:rgba(56,189,248,0.1);border-color:#38bdf8;color:#38bdf8;font-weight:600}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <div>
+      <div class="htitle">💧 Dam Volume Master</div>
+      <div class="hsub">전국 댐 실시간 수위 · 저수량 계산기 — 환경부 한강홍수통제소</div>
+    </div>
+    <span class="live-badge"><span class="pulse"></span>LIVE</span>
+    <div class="tabs">
+      <button class="tb active" onclick="setMode('calc')">계산기</button>
+      <button class="tb" onclick="setMode('live')">실시간</button>
+      <button class="tb" onclick="setMode('drought')">가뭄경보</button>
+      <button class="tb" onclick="setMode('learn')">학습</button>
+    </div>
+  </div>
+  <div class="sr">
+    <span class="sic">🔍</span>
+    <input class="si" id="search" placeholder="댐 이름, 강 이름 검색..." oninput="filterDams()">
+  </div>
+  <div class="body">
+    <div class="dl" id="dam-list"></div>
+    <div id="right-panel"><div class="empty"><span style="font-size:36px">🌊</span><span>왼쪽에서 댐을 선택하세요<br><span style="font-size:11px">한국 15개 + 해외 3개</span></span></div></div>
+  </div>
+</div>
+
+<script>
+const BACKEND = 'http://localhost:3001';
+
+const HAV={
+  soyang:   {hav:[[150,12,400],[155,18.5,580],[160,26.8,780],[165,36.2,1020],[170,45.9,1290],[175,55.1,1590],[180,62.4,1920],[185,66.8,2270],[190,68.9,2580],[195,69.8,2760],[198,70,2900]],desc:'국내 최대 다목적댐. 1973년 준공. 춘천 인근. 소양호 형성.'},
+  chungju:  {hav:[[115,5.2,200],[120,12.8,380],[125,22.4,620],[130,36.1,930],[135,52.3,1290],[138,63.8,1560],[141,78.2,1900],[143,88.5,2200],[145,97.5,2750]],desc:'국내 2위 규모. 남한강 상류. 충주호 형성. 1985년 준공.'},
+  daecheong:{hav:[[60,8.2,200],[62,12.1,280],[64,18.5,380],[66,26.3,500],[68,35.4,640],[70,45.2,800],[72,54.8,980],[74,63.1,1180],[76,68.2,1300],[78,71,1400],[80,72.8,1490]],desc:'금강 다목적댐. 대청호 형성. 1980년 준공.'},
+  andong:   {hav:[[130,4.2,180],[135,9.8,320],[140,18.5,520],[145,28.9,760],[150,38.2,980],[155,45.1,1100],[160,51.5,1248]],desc:'낙동강 상류. 안동호 형성. 1976년 준공.'},
+  yongdam:  {hav:[[220,6.2,90],[230,11.4,200],[240,17.8,340],[250,24.5,500],[258,30.1,640],[263,34,740],[265,36.2,815]],desc:'금강 최상류. 용담호 형성. 2001년 준공.'},
+  hapcheon: {hav:[[155,4.1,80],[159,7.8,160],[163,11.9,270],[167,16.2,390],[171,19.8,510],[175,23.1,660],[179,26,790]],desc:'낙동강 지류 황강. 합천호 형성. 1989년 준공.'},
+  imha:     {hav:[[141,3.5,60],[145,7.2,120],[149,11.8,210],[153,16.9,310],[157,21.5,430],[160,24.2,520],[163,26.3,595]],desc:'낙동강 지류 반변천. 임하호 형성. 1992년 준공.'},
+  seomjin:  {hav:[[173,4.8,70],[177,8.5,140],[181,12.8,230],[185,17.2,320],[189,21,390],[193,24.5,430],[196,26.6,466]],desc:'섬진강 상류. 국내 최초 다목적댐(1965).'},
+  juam:     {hav:[[140,4.5,55],[145,8.9,120],[150,14.2,205],[155,19.8,300],[160,25.1,385],[165,29.8,430],[170,32.1,457]],desc:'광주·전남 용수공급 핵심. 주암호 형성. 1991년 준공.'},
+  yeongju:  {hav:[[155,3.2,18],[158,5.8,45],[161,8.9,85],[164,12.1,128],[167,15.3,158],[170,18.5,181.6]],desc:'낙동강 상류 내성천. 2016년 준공. 경북 영주시.'},
+  boryeong: {hav:[[57,1.8,10],[62,3.5,25],[67,5.9,48],[72,8.4,72],[77,11,94],[83,13.2,108],[90,14.4,116.9]],desc:'충남 서해안 용수공급 핵심. 1998년 준공.'},
+  miryang:  {hav:[[130,1.2,6],[140,1.5,8],[147,3.2,22],[154,5.4,40],[159,7.2,57],[165,8.8,67],[172,9.8,73.6]],desc:'밀양강 상류. 밀양호 형성. 2001년 준공.'},
+  buan:     {hav:[[78,0.9,5],[83,1.8,12],[88,3,22],[93,4.2,34],[98,5.2,44],[101,5.9,50]],desc:'백천 상류. 전북 부안 용수공급.'},
+  janghung: {hav:[[65,1.5,5],[75,3.2,12],[85,5.8,24],[95,8.5,36],[110,12.1,43.7]],desc:'탐진강 상류. 강진·장흥 용수공급.'},
+  pyeonghwa:{hav:[[155,3,80],[170,6,200],[185,10,380],[200,16,680],[215,22,1200],[230,34.2,2630]],desc:'북한 수공 대비 홍수조절 전용댐. 화천군 소재.'},
+  three_gorges:{hav:[[145,660,171500],[150,720,197000],[155,790,222000],[160,870,249000],[165,940,277000],[170,1010,309000],[175,1084,393000]],desc:'세계 최대 수력발전댐. 양쯔강. 중국.'},
+  hoover:   {hav:[[304,120,8000],[315,180,11000],[325,260,14500],[335,360,18500],[345,440,23000],[355,530,27500],[373,660,36700]],desc:'1936년 준공. 미드호 형성. 콜로라도강.'},
+  aswan:    {hav:[[147,900,35000],[152,1500,55000],[157,2200,78000],[162,2900,103000],[167,3600,130000],[182,5248,162000]],desc:'나세르호 형성. 나일강. 1970년 준공.'},
+};
+
+const DAMS_DEF=[
+  {id:'soyang',    name:'소양강댐', river:'소양강', country:'한국',flag:'🇰🇷',full:2900,minL:150,maxL:198},
+  {id:'chungju',   name:'충주댐',   river:'남한강', country:'한국',flag:'🇰🇷',full:2750,minL:115,maxL:145},
+  {id:'daecheong', name:'대청댐',   river:'금강',   country:'한국',flag:'🇰🇷',full:1490,minL:60, maxL:80},
+  {id:'andong',    name:'안동댐',   river:'낙동강', country:'한국',flag:'🇰🇷',full:1248,minL:130,maxL:160},
+  {id:'yongdam',   name:'용담댐',   river:'금강',   country:'한국',flag:'🇰🇷',full:815, minL:220,maxL:265},
+  {id:'hapcheon',  name:'합천댐',   river:'황강',   country:'한국',flag:'🇰🇷',full:790, minL:155,maxL:179},
+  {id:'imha',      name:'임하댐',   river:'반변천', country:'한국',flag:'🇰🇷',full:595, minL:141,maxL:163},
+  {id:'seomjin',   name:'섬진강댐', river:'섬진강', country:'한국',flag:'🇰🇷',full:466, minL:173,maxL:196},
+  {id:'juam',      name:'주암댐',   river:'보성강', country:'한국',flag:'🇰🇷',full:457, minL:140,maxL:170},
+  {id:'yeongju',   name:'영주댐',   river:'내성천', country:'한국',flag:'🇰🇷',full:181.6,minL:155,maxL:170},
+  {id:'boryeong',  name:'보령댐',   river:'웅천천', country:'한국',flag:'🇰🇷',full:116.9,minL:57,maxL:90},
+  {id:'miryang',   name:'밀양댐',   river:'밀양강', country:'한국',flag:'🇰🇷',full:73.6,minL:130,maxL:172},
+  {id:'buan',      name:'부안댐',   river:'백천',   country:'한국',flag:'🇰🇷',full:50,  minL:78,maxL:101},
+  {id:'janghung',  name:'장흥댐',   river:'탐진강', country:'한국',flag:'🇰🇷',full:43.7,minL:65,maxL:126},
+  {id:'pyeonghwa', name:'평화의댐', river:'북한강', country:'한국',flag:'🇰🇷',full:2630,minL:155,maxL:230},
+  {id:'three_gorges',name:'싼샤댐', river:'양쯔강', country:'중국',flag:'🇨🇳',full:393000,minL:145,maxL:175},
+  {id:'hoover',    name:'후버댐',   river:'콜로라도강',country:'미국',flag:'🇺🇸',full:36700,minL:304,maxL:373},
+  {id:'aswan',     name:'아스완댐', river:'나일강', country:'이집트',flag:'🇪🇬',full:162000,minL:147,maxL:182},
+];
+const DAMS=DAMS_DEF.map(d=>({...d,...HAV[d.id]}));
+
+let liveData={}, selected=null, mode='calc', filtered=[...DAMS], chartMode='hv';
+
+async function loadLive(){
+  try{
+    const r=await fetch(BACKEND+'/api/dams/current');
+    const j=await r.json();
+    if(j.success) j.data.forEach(d=>{if(d.inRange)liveData[d.id]=d;});
+  }catch(e){
+    const sim={soyang:170.53,chungju:125.98,daecheong:72.52,andong:145.14,imha:148.98,seomjin:179.96,juam:161.48,yeongju:156.71,hapcheon:166.17,yongdam:251.91,boryeong:65.39,miryang:135.39,buan:82.22,janghung:72.07,pyeonghwa:170.42};
+    Object.entries(sim).forEach(([id,level])=>{liveData[id]={level,inRange:true};});
+  }
+  renderList();
+  if(selected&&liveData[selected.id]) renderRight();
+}
+
+function setMode(m){
+  mode=m;
+  document.querySelectorAll('.tb').forEach((b,i)=>b.classList.toggle('active',['calc','live','drought','learn'][i]===m));
+  renderRight();
+}
+
+function filterDams(){
+  const q=document.getElementById('search').value.toLowerCase();
+  filtered=q?DAMS.filter(d=>d.name.includes(document.getElementById('search').value)||d.river.toLowerCase().includes(q)||d.country.toLowerCase().includes(q)):[...DAMS];
+  renderList();
+}
+
+function interp(hav,h){
+  if(!hav||isNaN(h))return[0,0];
+  if(h<=hav[0][0])return[hav[0][1],hav[0][2]];
+  if(h>=hav[hav.length-1][0])return[hav[hav.length-1][1],hav[hav.length-1][2]];
+  for(let i=0;i<hav.length-1;i++){
+    const[h1,a1,v1]=hav[i],[h2,a2,v2]=hav[i+1];
+    if(h>=h1&&h<=h2){const t=(h-h1)/(h2-h1);return[a1+(a2-a1)*t,v1+(v2-v1)*t];}
+  }
+  return[0,0];
+}
+
+function fmtV(v){return v>=1000?(v/1000).toFixed(2)+'천':v.toLocaleString('ko-KR',{maximumFractionDigits:1});}
+function calcPct(level,minL,maxL){return Math.max(0,Math.min(100,((level-minL)/(maxL-minL))*100));}
+
+function comps(vm){
+  const v=vm*1e6;
+  return[
+    {l:'올림픽 수영장 (2,500㎥)',v:Math.round(v/2500).toLocaleString('ko-KR')+' 개'},
+    {l:'서울 시민 1년 식수',v:(v/(1e7*365*0.2)).toFixed(2)+' 년치'},
+    {l:'소형 욕조 (0.3㎥)',v:Math.round(v/0.3).toLocaleString('ko-KR')+' 개'},
+    {l:'63빌딩 (235,000㎥)',v:(v/235000).toFixed(2)+' 개'},
+  ];
+}
+
+function chartSVG(d,curH,cmode){
+  const cw=360,ch=140,hav=d.hav;
+  if(!hav)return'';
+  const col=cmode==='ha'?1:2;
+  const hMin=hav[0][0],hMax=hav[hav.length-1][0],yMin=hav[0][col],yMax=hav[hav.length-1][col];
+  const tx=v=>(v-hMin)/(hMax-hMin)*(cw-30)+15;
+  const ty=v=>ch-12-((v-yMin)/(yMax-yMin))*(ch-26);
+  const pts=hav.map(r=>`${tx(r[0])},${ty(r[col])}`).join(' ');
+  const color=cmode==='ha'?'#1D9E75':'#38bdf8';
+  let dot='';
+  if(curH!==null&&!isNaN(curH)){
+    const cv=interp(hav,curH);const y=cmode==='ha'?cv[0]:cv[1];
+    dot=`<circle cx="${tx(curH)}" cy="${ty(y)}" r="5" fill="#f59e0b"/>
+         <line x1="${tx(curH)}" y1="10" x2="${tx(curH)}" y2="${ch-12}" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+  }
+  return`<svg viewBox="0 0 ${cw} ${ch}" style="width:100%;display:block;border-radius:6px;background:rgba(2,11,24,0.8)">
+    ${[.3,.6,.9].map(t=>`<line x1="15" y1="${ty(yMin+t*(yMax-yMin))}" x2="${cw-10}" y2="${ty(yMin+t*(yMax-yMin))}" stroke="rgba(56,189,248,0.08)"/>`).join('')}
+    <path d="M ${pts} L ${tx(hMax)},${ch-12} L ${tx(hMin)},${ch-12} Z" fill="${cmode==='ha'?'rgba(29,158,117,0.08)':'rgba(56,189,248,0.08)'}"/>
+    <path d="M ${pts}" fill="none" stroke="${color}" stroke-width="2"/>
+    ${dot}
+    <text x="15" y="${ch-2}" fill="#475569" font-size="9">${hMin}</text>
+    <text x="${cw-40}" y="${ch-2}" fill="#475569" font-size="9">${hMax}</text>
+  </svg>`;
+}
+
+function renderList(){
+  const kr=filtered.filter(d=>d.country==='한국');
+  const wr=filtered.filter(d=>d.country!=='한국');
+  let html='';
+  if(kr.length){
+    html+=`<div class="slbl">🇰🇷 한국 (${kr.length})</div>`;
+    html+=kr.map(d=>{
+      const live=liveData[d.id];
+      const pct=live?calcPct(live.level,d.minL,d.maxL):null;
+      const fc=pct!=null?(pct>=70?'#22c55e':pct>=40?'#f59e0b':'#ef4444'):null;
+      return`<div class="di ${selected&&selected.id===d.id?'active':''}" onclick="selectDam('${d.id}')">
+        ${live?`<span class="dc" style="color:${fc}">${live.level} m</span>`:`<span class="dc">${d.full>=1000?(d.full/1000).toFixed(1)+'천':d.full}M㎥</span>`}
+        <div class="dn">${d.name}${live?`<span style="font-size:9px;background:rgba(29,158,117,0.2);color:#9FE1CB;padding:1px 4px;border-radius:3px;margin-left:3px">LIVE</span>`:''}</div>
+        <div class="dm">${d.river}${pct!=null?` · ${pct.toFixed(0)}%`:''}</div>
+      </div>`;
+    }).join('');
+  }
+  if(wr.length){
+    html+=`<div class="slbl" style="margin-top:6px">🌏 해외 (${wr.length})</div>`;
+    html+=wr.map(d=>`<div class="di ${selected&&selected.id===d.id?'active':''}" onclick="selectDam('${d.id}')">
+      <span class="dc">${d.full>=10000?(d.full/10000).toFixed(1)+'억':d.full}M㎥</span>
+      <div class="dn">${d.flag} ${d.name}</div>
+      <div class="dm">${d.country} · ${d.river}</div>
+    </div>`).join('');
+  }
+  document.getElementById('dam-list').innerHTML=html||'<div style="color:#475569;padding:10px;font-size:12px">검색 결과 없음</div>';
+}
+
+function selectDam(id){selected=DAMS.find(d=>d.id===id);chartMode='hv';renderList();renderRight();}
+
+function updateChart(){
+  if(!selected)return;
+  const h=parseFloat(document.getElementById('li').value);
+  const ca=document.getElementById('chart-area');
+  if(ca)ca.innerHTML=chartSVG(selected,h,chartMode);
+}
+
+function setChart(m){
+  chartMode=m;
+  document.querySelectorAll('[id^="ctb-"]').forEach(b=>b.classList.remove('active'));
+  const b=document.getElementById('ctb-'+m);if(b)b.classList.add('active');
+  updateChart();
+}
+
+function calcResult(){
+  if(!selected)return;
+  const h=parseFloat(document.getElementById('li').value);
+  if(isNaN(h))return;
+  const[am,vm]=interp(selected.hav,h);
+  const avgD=am>0?(vm*1e6)/(am*1e6):0;
+  const pct=(vm/selected.full)*100;
+  const fc=pct>70?'#22c55e':pct>40?'#f59e0b':'#ef4444';
+  document.getElementById('result-card').innerHTML=`
+    <div class="card">
+      <div class="ct">계산 결과 — ${selected.name} @ ${h} EL.m</div>
+      <div class="rg3">
+        <div class="rm"><div class="rl">저수량 V</div><div class="rv">${fmtV(vm)}<span class="ru">백만㎥</span></div></div>
+        <div class="rm"><div class="rl">수면 면적 A</div><div class="rv">${am.toFixed(1)}<span class="ru">km²</span></div></div>
+        <div class="rm"><div class="rl">평균 수심</div><div class="rv">${avgD.toFixed(1)}<span class="ru">m</span></div></div>
+      </div>
+      <div class="bw">
+        <div class="bl"><span>저수율</span><span style="color:${fc};font-weight:600">${pct.toFixed(1)}%</span></div>
+        <div class="bb"><div class="bf" style="width:${Math.min(pct,100)}%;background:${fc}"></div></div>
+      </div>
+      <div style="font-size:10px;font-weight:600;color:#94a3b8;margin-bottom:5px">이 양은 얼마나 많을까요?</div>
+      <div class="cl">${comps(vm).map(c=>`<div class="ci"><span class="cil">${c.l}</span><span class="civ">${c.v}</span></div>`).join('')}</div>
+    </div>`;
+}
+
+function renderRight(){
+  const rp=document.getElementById('right-panel');
+
+  if(mode==='drought'){
+    const allDams=DAMS.filter(d=>d.country==='한국'&&liveData[d.id]);
+    const damList=allDams.map(d=>{
+      const live=liveData[d.id];
+      const pct=calcPct(live.level,d.minL,d.maxL);
+      return{...d,level:live.level,pct,status:pct>=70?'ok':pct>=40?'warn':'danger'};
+    }).sort((a,b)=>a.pct-b.pct);
+    const ok=damList.filter(d=>d.status==='ok').length;
+    const warn=damList.filter(d=>d.status==='warn').length;
+    const danger=damList.filter(d=>d.status==='danger').length;
+    const colors={ok:'#22c55e',warn:'#f59e0b',danger:'#ef4444'};
+    rp.innerHTML=`<div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="ct" style="margin-bottom:0">전국 댐 가뭄 경보</div>
+        <span class="live-badge" style="margin-left:0"><span class="pulse"></span>실시간</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:10px">
+        <div style="background:rgba(34,197,94,0.1);border-radius:8px;padding:7px;text-align:center"><div style="font-size:9px;color:#64748b">정상 70%↑</div><div style="font-size:18px;font-weight:600;color:#22c55e">${ok}개</div></div>
+        <div style="background:rgba(245,158,11,0.1);border-radius:8px;padding:7px;text-align:center"><div style="font-size:9px;color:#64748b">주의 40~70%</div><div style="font-size:18px;font-weight:600;color:#f59e0b">${warn}개</div></div>
+        <div style="background:rgba(239,68,68,0.1);border-radius:8px;padding:7px;text-align:center"><div style="font-size:9px;color:#64748b">경보 40%↓</div><div style="font-size:18px;font-weight:600;color:#ef4444">${danger}개</div></div>
+      </div>
+      ${danger>0?`<div class="alert-danger">🚨 가뭄 경보 — ${damList.filter(d=>d.status==='danger').map(d=>d.name).join(', ')} 저수율 40% 미만</div>`:''}
+      ${damList.map(d=>`<div class="dam-row ${d.status==='ok'?'':d.status}">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:600;color:#e0ecf8">${d.name}</span>
+          <span style="font-size:12px;font-weight:600;color:${colors[d.status]}">${d.pct.toFixed(1)}%</span>
+        </div>
+        <div style="height:4px;background:rgba(56,189,248,0.1);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${d.pct.toFixed(1)}%;background:${colors[d.status]};border-radius:3px"></div>
+        </div>
+        <div style="font-size:10px;color:#64748b;margin-top:2px">${d.river} · ${d.level} EL.m</div>
+      </div>`).join('')}
+    </div>`;
+    return;
+  }
+
+  if(mode==='live'){
+    const liveDams=DAMS.filter(d=>d.country==='한국'&&liveData[d.id]);
+    rp.innerHTML=`<div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="ct" style="margin-bottom:0">실시간 수위 현황 — ${liveDams.length}개 댐</div>
+        <span class="live-badge" style="margin-left:0"><span class="pulse"></span>환경부 HRFCO</span>
+      </div>
+      ${liveDams.map(d=>{
+        const live=liveData[d.id];
+        const[,vm]=interp(d.hav,live.level);
+        const pct=(vm/d.full)*100;
+        const fc=pct>70?'#22c55e':pct>40?'#f59e0b':'#ef4444';
+        return`<div class="wi" onclick="selectDam('${d.id}');setMode('calc')">
+          <div><div style="font-size:12px;font-weight:600;color:#e0ecf8">${d.name}</div><div style="font-size:10px;color:#64748b">${d.river}</div></div>
+          <div style="text-align:right;margin-right:8px">
+            <div style="font-size:13px;font-weight:600;color:#38bdf8">${live.level} EL.m</div>
+            <div style="font-size:10px;color:${fc}">${pct.toFixed(1)}% · ${fmtV(vm)} 백만㎥</div>
+          </div>
+          <div style="width:40px"><div style="height:5px;background:rgba(56,189,248,0.1);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.min(pct,100)}%;background:${fc};border-radius:3px"></div></div></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+    return;
+  }
+
+  if(mode==='learn'){
+    rp.innerHTML=`<div class="card">
+      <div class="ct">H·A·V 곡선의 원리</div>
+      <div style="background:rgba(56,189,248,0.05);border-radius:8px;padding:12px;font-size:12px;color:#94a3b8;line-height:1.8">
+        <p>댐 저수량은 수위 h의 수면 넓이 <strong style="color:#38bdf8">A(h)</strong>를 적분해 구합니다.</p>
+        <div style="font-family:monospace;font-size:15px;color:#38bdf8;text-align:center;padding:10px;border:1px solid rgba(56,189,248,0.2);border-radius:8px;margin:10px 0">V(H) = ∫ A(h) dh</div>
+        <p>실제로는 수심 측량으로 H·A·V 표를 만들고 <strong style="color:#38bdf8">선형 보간법</strong>으로 계산합니다.<br>수위↑ → 수면 면적↑ → 저수량은 <strong style="color:#38bdf8">비선형 곡선</strong>으로 증가.</p>
+      </div>
+    </div>
+    ${selected?`<div class="card">
+      <div class="ct">${selected.name} H·A·V 데이터</div>
+      <table style="width:100%;font-size:11px;border-collapse:collapse">
+        <tr><th style="text-align:left;padding:4px 6px;color:#64748b;border-bottom:1px solid rgba(56,189,248,0.15)">수위(EL.m)</th><th style="text-align:right;padding:4px 6px;color:#64748b;border-bottom:1px solid rgba(56,189,248,0.15)">면적(km²)</th><th style="text-align:right;padding:4px 6px;color:#64748b;border-bottom:1px solid rgba(56,189,248,0.15)">저수량(M㎥)</th><th style="text-align:right;padding:4px 6px;color:#64748b;border-bottom:1px solid rgba(56,189,248,0.15)">저수율(%)</th></tr>
+        ${selected.hav.map(([h,a,v])=>`<tr><td style="padding:4px 6px;border-bottom:1px solid rgba(56,189,248,0.06);color:#94a3b8">${h}</td><td style="text-align:right;padding:4px 6px;border-bottom:1px solid rgba(56,189,248,0.06);color:#94a3b8">${a}</td><td style="text-align:right;padding:4px 6px;border-bottom:1px solid rgba(56,189,248,0.06);color:#38bdf8">${v.toLocaleString()}</td><td style="text-align:right;padding:4px 6px;border-bottom:1px solid rgba(56,189,248,0.06);color:${(v/selected.full*100)>=70?'#22c55e':(v/selected.full*100)>=40?'#f59e0b':'#ef4444'}">${(v/selected.full*100).toFixed(1)}</td></tr>`).join('')}
+      </table>
+    </div>`:'<div style="color:#475569;padding:20px;text-align:center;font-size:12px">왼쪽에서 댐을 선택하면 데이터가 표시됩니다.</div>'}`;
+    return;
+  }
+
+  if(!selected){rp.innerHTML=`<div class="empty"><span style="font-size:36px">🌊</span><span>왼쪽에서 댐을 선택하세요<br><span style="font-size:11px">한국 15개 + 해외 3개</span></span></div>`;return;}
+  const d=selected,live=liveData[d.id];
+  rp.innerHTML=`
+    <div class="card">
+      <div style="font-size:16px;font-weight:700;color:#e0ecf8;margin-bottom:3px">${d.flag} ${d.name}${live?'<span style="font-size:9px;background:rgba(29,158,117,0.2);color:#9FE1CB;padding:2px 6px;border-radius:8px;margin-left:8px">LIVE</span>':''}</div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:8px">${d.country} · ${d.river}</div>
+      <div style="font-size:12px;color:#94a3b8;line-height:1.6;margin-bottom:8px">${d.desc}</div>
+      ${live?`<div class="live-box"><span class="pulse"></span><span>오늘 실시간 수위 <strong>${live.level} EL.m</strong></span>
+        <button class="cb" style="padding:3px 10px;font-size:10px;margin-left:auto" onclick="document.getElementById('li').value='${live.level}';updateChart()">이 수위 사용</button>
+      </div>`:''}
+      <div class="stats3">
+        <div class="stat"><div class="sl">만수위</div><div class="sv">${d.maxL} EL.m</div></div>
+        <div class="stat"><div class="sl">총 저수량</div><div class="sv">${d.full>=1000?(d.full/1000).toFixed(1)+'천':d.full} M㎥</div></div>
+        <div class="stat"><div class="sl">저수위</div><div class="sv">${d.minL} EL.m</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">수위 입력 → H·A·V 계산</div>
+      <div class="ir">
+        <input class="li" id="li" type="number" placeholder="${d.minL} ~ ${d.maxL}" oninput="updateChart()">
+        <span style="font-size:10px;color:#64748b;white-space:nowrap">EL.m</span>
+        <button class="cb" onclick="calcResult()">계산</button>
+      </div>
+      <div class="ctabs">
+        <button class="ctb active" id="ctb-hv" onclick="setChart('hv')">H-V 저수량</button>
+        <button class="ctb" id="ctb-ha" onclick="setChart('ha')">H-A 면적</button>
+      </div>
+      <div id="chart-area">${chartSVG(d,live?live.level:null,'hv')}</div>
+      <div style="font-size:9px;color:#475569;text-align:center;margin-top:3px">가로: 수위(EL.m) · 세로: 저수량(백만㎥) · 🟡 현재 수위</div>
+    </div>
+    <div id="result-card"></div>`;
+  if(live)setTimeout(()=>calcResult(),50);
+}
+
+renderList();
+loadLive();
+setInterval(loadLive,60000);
+</script>
+</body>
+</html>
