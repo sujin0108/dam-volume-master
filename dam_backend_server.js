@@ -36,7 +36,7 @@ function dateStr(daysAgo) {
 }
 
 async function getAllData() {
-  const r = await axios.get(`https://api.hrfco.go.kr/${HRFCO_KEY}/waterlevel/list/1H.json`, { timeout:10000 });
+  const r = await axios.get(`https://api.hrfco.go.kr/${HRFCO_KEY}/waterlevel/list/1H.json`, { timeout:30000 });
   return r.data?.content || [];
 }
 
