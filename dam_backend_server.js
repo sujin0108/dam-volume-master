@@ -8,12 +8,6 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-// index.html 정적 파일 제공
-app.use(express.static(__dirname));
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
-});
-
 // ─────────────────────────────────────────────
 // API 키
 // ─────────────────────────────────────────────
