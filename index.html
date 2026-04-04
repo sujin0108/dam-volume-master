@@ -272,6 +272,11 @@ section.active { display: block; }
   width: 100%; max-width: 900px;
   max-height: 90vh; overflow-y: auto;
   box-shadow: var(--shadow);
+  animation: modalIn 0.25s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .modal-header {
   padding: 24px 28px 20px;
@@ -831,28 +836,158 @@ canvas { max-height: 260px; }
 .data-trust-sep { color: var(--text3); opacity: 0.4; }
 
 /* 반응형 */
+/* ═══════════════════════════════════════
+   모바일 최적화 (전면 개편)
+═══════════════════════════════════════ */
 @media (max-width: 768px) {
-  .briefing-card { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .briefing-status { text-align: left; }
-  .trend-panel { flex-wrap: wrap; gap: 12px; }
-  .summary-bar { grid-template-columns: repeat(2, 1fr); }
-  .realtime-grid { grid-template-columns: 1fr; }
-  .explorer-layout { grid-template-columns: 1fr; }
-  .shape-cards { grid-template-columns: repeat(2, 1fr); }
-  .dam-grid { grid-template-columns: 1fr; }
-  .world-grid { grid-template-columns: 1fr; }
-  .edu-cards { grid-template-columns: 1fr; }
-  header { padding: 0 12px; height: auto; flex-wrap: wrap; gap: 6px; padding: 8px 12px; }
-  nav { order: 3; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
-  .nav-btn { padding: 6px 8px; font-size: 11px; }
-  .logo-text { font-size: 17px; }
+
+  /* ── 헤더 & 네비 ── */
+  header {
+    padding: 8px 12px;
+    height: auto;
+    flex-wrap: nowrap;
+    gap: 8px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo-icon { width: 32px; height: 32px; }
+  .logo-icon svg { width: 32px; height: 32px; }
+  .logo-text { font-size: 16px; }
+  .logo-sub { display: none; } /* 모바일에서 부제목 숨김 */
+
+  /* 네비: 가로 스크롤 한 줄로 */
+  nav {
+    order: 3;
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 4px;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* 헤더 오른쪽 컨트롤 */
+  header > div:last-child { flex-shrink: 0; }
+  .unit-toggle { display: none; } /* 모바일에서 단위 토글 숨김 */
+  .lang-btn { padding: 4px 8px; font-size: 11px; }
+
+  /* ── 컨테이너 ── */
+  .container { padding: 0 12px; }
+
+  /* ── 섹션 타이틀 ── */
   .section-title { font-size: 20px; }
-  .map-container { height: 400px; }
-  .modal { margin: 8px; max-height: 95vh; }
-  .intuitive-grid { grid-template-columns: repeat(2,1fr); }
-  footer { padding: 16px; }
-  footer > div { flex-direction: column; gap: 10px; }
+  .section-sub { font-size: 12px; }
+  .section-header { margin-bottom: 16px; padding-bottom: 12px; }
+
+  /* ── 데이터 신뢰도 바 ── */
+  .data-trust-bar {
+    font-size: 10px;
+    padding: 6px 10px;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .data-trust-sep { display: none; }
+  #trust-source, #trust-time { display: none; } /* 모바일에서 출처/시간 숨김 */
+
+  /* ── 브리핑 카드 ── */
+  .briefing-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 14px 16px;
+  }
+  .briefing-icon { font-size: 28px; }
+  .briefing-title { font-size: 14px; }
+  .briefing-msg { font-size: 12px; line-height: 1.5; }
+  .briefing-status { text-align: left; width: 100%; }
+
+  /* ── 추세 패널 ── */
+  .trend-panel {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+  .trend-panel-left { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+  .trend-canvas-wrap { width: 100%; order: 3; }
+  #trend-canvas { height: 55px; }
+  .trend-panel-right { order: 2; }
+  .trend-today-val { font-size: 22px; }
+
+  /* ── 요약 카드 ── */
+  .summary-bar { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+  .summary-value { font-size: 26px; }
+  .summary-card { padding: 14px; }
+  .summary-interpret { font-size: 10px; }
+
+  /* ── 댐 카드 그리드 ── */
+  .dam-grid { grid-template-columns: 1fr; gap: 10px; }
+  .dam-card { padding: 14px; }
+  .dam-name { font-size: 16px; }
+  .dam-rate-big { font-size: 36px; }
+
+  /* ── 지도 ── */
+  .map-container { height: 350px; }
+  .map-controls { flex-wrap: wrap; gap: 4px; }
+  .map-ctrl-btn { padding: 5px 10px; font-size: 11px; }
+  .map-legend { display: none; } /* 범례 숨김 — 마커 색상으로 충분 */
+
+  /* ── 모달 — 바텀시트 ── */
+  .modal-overlay { padding: 0; }
+  .modal {
+    margin: 0;
+    max-height: 92vh;
+    border-radius: 20px 20px 0 0;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    width: 100%;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+  .modal-overlay.open { align-items: flex-end; }
+  .modal-header { padding: 16px 20px 12px; }
+  .modal-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 2px; }
+  .modal-tabs::-webkit-scrollbar { display: none; }
+  .detail-tab { white-space: nowrap; font-size: 12px; padding: 7px 12px; flex-shrink: 0; }
+  .realtime-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .big-num { font-size: 32px; }
+  .intuitive-grid { grid-template-columns: repeat(2,1fr); gap: 8px; }
+  .flow-row { grid-template-columns: repeat(3,1fr); gap: 8px; }
+
+  /* ── 계산기 ── */
+  .explorer-layout { grid-template-columns: 1fr; }
+  .shape-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .mode-switch-btn { font-size: 12px; padding: 8px 14px; }
+
+  /* ── 교육 ── */
+  .edu-cards { grid-template-columns: 1fr; gap: 12px; }
+  .edu-card { padding: 18px; }
+
+  /* ── 세계댐 ── */
+  .world-grid { grid-template-columns: 1fr; }
+
+  /* ── 푸터 ── */
+  footer { padding: 16px 12px; }
+  footer > div { flex-direction: column; gap: 8px; text-align: center; }
 }
+
+/* 아주 작은 화면 (360px 이하) */
+@media (max-width: 380px) {
+  .summary-bar { grid-template-columns: 1fr 1fr; }
+  .nav-btn { padding: 5px 8px; font-size: 10px; }
+  .briefing-msg { font-size: 11px; }
+}
+
 </style>
 </head>
 <body>
@@ -1865,6 +2000,10 @@ canvas { max-height: 260px; }
 <!-- 댐 상세 모달 -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
+    <!-- 모바일 드래그 핸들 -->
+    <div style="display:flex;justify-content:center;padding:10px 0 0;cursor:pointer;" onclick="closeModal()">
+      <div style="width:40px;height:4px;background:var(--border);border-radius:2px;"></div>
+    </div>
     <div class="modal-header">
       <div>
         <div class="modal-title" id="modal-title">—</div>
