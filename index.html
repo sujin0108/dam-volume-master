@@ -91,6 +91,7 @@ header {
   color: var(--accent);
   letter-spacing: 2px;
   line-height: 1;
+  white-space: nowrap;  /* 절대 줄바꿈 안 함 */
 }
 .logo-sub {
   font-size: 9px;
@@ -837,33 +838,35 @@ canvas { max-height: 260px; }
 
 /* 반응형 */
 /* ═══════════════════════════════════════
-   모바일 최적화 (전면 개편)
+   모바일 최적화
 ═══════════════════════════════════════ */
 @media (max-width: 768px) {
 
-  /* ── 헤더 & 네비 ── */
+  /* ── 헤더: 로고 한 줄 + nav 두 번째 줄 ── */
   header {
-    padding: 8px 12px;
+    padding: 8px 12px 4px;
     height: auto;
-    flex-wrap: wrap;        /* ← wrap 허용 */
+    flex-wrap: wrap;
+    align-items: center;
     gap: 4px;
-    position: sticky; top: 0; z-index: 100;
   }
-  /* 로고 */
-  .logo { flex-shrink: 0; }
-  .logo-icon { width: 30px; height: 30px; }
-  .logo-icon svg { width: 30px; height: 30px; }
-  .logo-text { font-size: 15px; letter-spacing: 1px; }
+  .logo { flex-shrink: 0; gap: 8px; }
+  .logo-icon { width: 28px; height: 28px; }
+  .logo-icon svg { width: 28px; height: 28px; }
+  .logo-text { font-size: 14px; letter-spacing: 1px; white-space: nowrap; }
   .logo-sub { display: none; }
 
-  /* 헤더 오른쪽 컨트롤 (단위+언어) */
-  header > div:last-child { margin-left: auto; flex-shrink: 0; }
-  .unit-toggle { gap: 4px; }
+  /* 단위+언어 토글: 로고 오른쪽, 자동 여백으로 우측 정렬 */
+  header > div:last-child {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+  }
   .unit-label { display: none; }
-  .unit-opt { padding: 3px 8px; font-size: 10px; }
+  .unit-switch { padding: 2px; }
+  .unit-opt { padding: 3px 7px; font-size: 10px; }
   .lang-btn { padding: 4px 8px; font-size: 11px; }
 
-  /* 네비: 두 번째 줄, 가로 스크롤 한 줄 */
+  /* nav: 두 번째 줄 전체 너비, 가로 스크롤 */
   nav {
     order: 3;
     width: 100%;
@@ -872,7 +875,7 @@ canvas { max-height: 260px; }
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     gap: 3px;
-    padding-bottom: 2px;
+    padding: 4px 0 2px;
     scrollbar-width: none;
   }
   nav::-webkit-scrollbar { display: none; }
@@ -883,25 +886,19 @@ canvas { max-height: 260px; }
     flex-shrink: 0;
   }
 
-  /* ── 컨테이너 ── */
+  /* ── 레이아웃 ── */
   .container { padding: 0 12px; }
-
-  /* ── 섹션 타이틀 ── */
   .section-title { font-size: 20px; }
   .section-sub { font-size: 12px; }
   .section-header { margin-bottom: 16px; padding-bottom: 12px; }
 
   /* ── 데이터 신뢰도 바 ── */
-  .data-trust-bar {
-    font-size: 10px; padding: 6px 10px; gap: 6px; flex-wrap: wrap;
-  }
+  .data-trust-bar { font-size: 10px; padding: 6px 10px; gap: 6px; }
   .data-trust-sep { display: none; }
   #trust-source, #trust-time { display: none; }
 
   /* ── 브리핑 카드 ── */
-  .briefing-card {
-    flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px 16px;
-  }
+  .briefing-card { flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px 16px; }
   .briefing-icon { font-size: 26px; }
   .briefing-title { font-size: 14px; }
   .briefing-msg { font-size: 12px; line-height: 1.5; }
@@ -916,15 +913,14 @@ canvas { max-height: 260px; }
   .trend-today-val { font-size: 22px; }
 
   /* ── 요약 카드 ── */
-  .summary-bar { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+  .summary-bar { grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 16px; }
   .summary-value { font-size: 26px; }
   .summary-card { padding: 14px; }
   .summary-interpret { font-size: 10px; }
 
-  /* ── 댐 카드 그리드 ── */
+  /* ── 댐 카드 ── */
   .dam-grid { grid-template-columns: 1fr; gap: 10px; }
   .dam-card { padding: 14px; }
-  .dam-name { font-size: 16px; }
   .dam-rate-big { font-size: 36px; }
 
   /* ── 지도 ── */
@@ -933,73 +929,77 @@ canvas { max-height: 260px; }
   .map-ctrl-btn { padding: 5px 10px; font-size: 11px; }
   .map-legend { display: none; }
 
-  /* ── 모달 — 바텀시트 ── */
+  /* ── 모달: 바텀시트 ── */
   .modal-overlay { padding: 0; }
+  .modal-overlay.open { align-items: flex-end; }
   .modal {
     margin: 0;
     max-height: 92vh;
+    width: 100%;
     border-radius: 20px 20px 0 0;
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    width: 100%;
-    overflow-x: hidden;         /* ← 가로 오버플로 차단 */
+    overflow-x: hidden;
     animation: slideUp 0.3s ease;
   }
   @keyframes slideUp {
     from { transform: translateY(100%); }
     to   { transform: translateY(0); }
   }
-  .modal-overlay.open { align-items: flex-end; }
-  .modal-body { padding: 16px; }
-  .modal-header { padding: 12px 16px 10px; }
-  .modal-title { font-size: 18px; }
+  .modal-body { padding: 14px; }
+  .modal-header { padding: 10px 14px 8px; }
+  .modal-title { font-size: 17px; }
+  .modal-sub { font-size: 11px; }
 
   /* 모달 탭 가로 스크롤 */
   .detail-tabs {
     flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
-    gap: 2px; padding-bottom: 10px; margin-bottom: 16px;
+    gap: 2px; padding-bottom: 8px; margin-bottom: 14px;
   }
   .detail-tabs::-webkit-scrollbar { display: none; }
   .detail-tab { white-space: nowrap; font-size: 11px; padding: 6px 10px; flex-shrink: 0; }
 
-  /* 모달 내 실시간 패널 */
-  .realtime-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .big-num { font-size: 28px; }
-  .intuitive-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .flow-row { grid-template-columns: repeat(3,1fr); gap: 6px; }
+  /* ─── 모달 내부 오버플로 방지 핵심 ─── */
+  /* 모든 그리드 아이템: min-width 0 (그리드 오버플로 차단) */
+  .modal .info-block,
+  .modal .flow-item,
+  .modal [style*="grid"] > * {
+    min-width: 0;
+    overflow: hidden;
+  }
 
-  /* 모달 내 모든 canvas 너비 제한 */
-  .modal canvas { max-width: 100% !important; }
-
-  /* 모달 내 기상·예비방류 — 그리드 1열로 */
-  #panel-weather .info-block > div[style*="grid-template-columns:1fr 1fr"] {
+  /* 실시간 패널: 2열 → 1열, big-num 크기 축소 */
+  .realtime-grid {
     grid-template-columns: 1fr !important;
+    gap: 10px;
   }
-  #panel-weather #rain-forecast-bars {
-    grid-template-columns: repeat(3,1fr) !important;
-    gap: 8px !important;
-  }
-  #panel-weather div[style*="grid-template-columns:1fr 1fr 1fr"] {
-    grid-template-columns: 1fr 1fr !important;
-  }
-  #panel-weather div[style*="grid-template-columns:repeat(2,1fr)"] {
-    grid-template-columns: 1fr 1fr !important;
+  .big-num {
+    font-size: 36px !important;  /* 48px → 36px */
   }
 
-  /* 모달 내 댐 소개 — 그리드 1열로 */
-  #panel-intro div[style*="grid-template-columns:repeat(3,1fr)"] {
-    grid-template-columns: repeat(2,1fr) !important;
-  }
-  #panel-intro div[style*="grid-template-columns:1fr 1fr"] {
-    grid-template-columns: 1fr !important;
-  }
+  /* 유입/방류 행 */
+  .flow-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+  .flow-value { font-size: 18px; }
 
-  /* 모달 내 H-V, 예측 패널 */
-  #panel-hvcurve canvas, #panel-predict canvas { max-width: 100%; }
+  /* 직관적 비교 3열 */
+  .intuitive-grid { grid-template-columns: repeat(3,1fr); gap: 6px; }
+  .intuitive-val { font-size: 14px; }
+  .intuitive-emoji { font-size: 20px; }
+
+  /* 기상·예비방류 패널 그리드 1열 */
+  #panel-weather * { max-width: 100%; box-sizing: border-box; }
+  #panel-weather .info-block > div { grid-template-columns: 1fr !important; }
+
+  /* 댐 소개 패널 그리드 */
+  #panel-intro * { max-width: 100%; box-sizing: border-box; }
+  #panel-intro div[style*="grid"] { grid-template-columns: 1fr 1fr !important; }
+
+  /* 모든 캔버스 너비 제한 */
+  .modal canvas { max-width: 100% !important; width: 100% !important; }
 
   /* ── 계산기 ── */
   .explorer-layout { grid-template-columns: 1fr; }
-  .shape-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .shape-cards { grid-template-columns: repeat(2,1fr); }
   .mode-switch-btn { font-size: 12px; padding: 8px 14px; }
 
   /* ── 교육 ── */
@@ -1009,21 +1009,19 @@ canvas { max-height: 260px; }
   /* ── 세계댐 ── */
   .world-grid { grid-template-columns: 1fr; }
 
+  /* ── 저수지 등록 ── */
+  .crowd-layout { grid-template-columns: 1fr !important; }
+
   /* ── 푸터 ── */
   footer { padding: 16px 12px; }
   footer > div { flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 }
 
-/* 아주 작은 화면 (380px 이하) */
+/* 아주 작은 화면 */
 @media (max-width: 380px) {
   .summary-bar { grid-template-columns: 1fr 1fr; }
   .nav-btn { padding: 5px 8px; font-size: 10px; }
-  .briefing-msg { font-size: 11px; }
-}
-
-/* ── 저수지 등록 탭 & 지도 모바일 ── */
-@media (max-width: 768px) {
-  .crowd-layout { grid-template-columns: 1fr !important; }
+  .big-num { font-size: 28px !important; }
 }
 
 </style>
