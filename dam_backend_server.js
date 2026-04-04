@@ -173,7 +173,7 @@ function alertFromRate(rate) {
 // ─────────────────────────────────────────────
 async function fetchHRFCO() {
   const url = `https://api.hrfco.go.kr/${HRFCO_KEY}/waterlevel/list/1H.json`;
-  const r = await axios.get(url, { timeout:12000 });
+  const r = await axios.get(url, { timeout:30000 });
   return r.data?.content || [];
 }
 
@@ -239,7 +239,7 @@ async function fetchWeather(nx, ny) {
         serviceKey: KMA_KEY, pageNo:1, numOfRows:1000,
         dataType:'JSON', base_date:baseDate, base_time:baseTime, nx, ny,
       },
-      timeout: 10000,
+      timeout: 25000,
     });
     const items = r.data?.response?.body?.items?.item || [];
 
@@ -305,8 +305,37 @@ function mockWeather() {
 // 엔드포인트
 // ══════════════════════════════════════════════
 
+// ── 캐시: 로컬서버 → Render 자동 전송 ──────
+const RENDER_URL = 'https://dam-volume-master.onrender.com';
+const PUSH_SECRET = 'damwatch2026';
+let _lastPushTime = 0;
+
+async function _pushToRender(data) {
+  // 로컬 환경에서만 실행 (Render 환경 제외)
+  if (process.env.RENDER) return;
+  // 10분에 한 번만 전송
+  const now = Date.now();
+  if (now - _lastPushTime < 10 * 60 * 1000) return;
+  _lastPushTime = now;
+
+  try {
+    await axios.post(`${RENDER_URL}/api/cache/update`, {
+      secret: PUSH_SECRET,
+      data,
+    }, { timeout: 15000 });
+    console.log('[Render 전송] 성공:', new Date().toLocaleTimeString('ko-KR'));
+  } catch(e) {
+    console.warn('[Render 전송] 실패:', e.message);
+  }
+}
+
 // ── 1. /api/all  (프론트 대시보드 메인) ──────
 app.get('/api/all', async (req, res) => {
+  // Render 환경이면 캐시된 데이터 반환
+  if (process.env.RENDER && _cachedData) {
+    return res.json(_cachedData);
+  }
+
   try {
     const raw = await fetchHRFCO();
     const dams = Object.entries(DAM_OBS).map(([obscd, info]) => {
@@ -317,18 +346,33 @@ app.get('/api/all', async (req, res) => {
     const total_storage  = dams.reduce((a,d)=>a+d.volume, 0);
     const total_capacity = dams.reduce((a,d)=>a+d.full, 0);
 
-    res.json({
+    const result = {
       dams,
       updated:        new Date().toISOString(),
       total_storage:  Math.round(total_storage*10)/10,
       total_capacity: Math.round(total_capacity),
       source:         'HRFCO 한강홍수통제소',
       is_mock:        dams.every(d=>d.is_mock),
-    });
+    };
+
+    // 로컬에서 Render로 자동 전송
+    _pushToRender(result);
+
+    res.json(result);
   } catch(e) {
     console.error('[/api/all 오류]', e.message);
     res.status(502).json({ error: e.message });
   }
+});
+
+// ── 캐시 업데이트 엔드포인트 (로컬 → Render 전송용) ──
+let _cachedData = null;
+app.post('/api/cache/update', (req, res) => {
+  const { secret, data } = req.body;
+  if (secret !== PUSH_SECRET) return res.status(403).json({ error: '인증 실패' });
+  _cachedData = { ...data, cached: true, cache_updated: new Date().toISOString() };
+  console.log('[캐시 업데이트]', new Date().toLocaleTimeString('ko-KR'));
+  res.json({ ok: true });
 });
 
 
@@ -485,7 +529,7 @@ app.get('/api/dams/trend', async (req, res) => {
 
   try {
     const url = `https://api.hrfco.go.kr/${HRFCO_KEY}/waterlevel/list/1H/${obscd}/${sdt}/${edt}.json`;
-    const r   = await axios.get(url, { timeout:15000 });
+    const r   = await axios.get(url, { timeout:30000 });
     const raw = r.data?.content || [];
     const sampled = raw
       .filter((_,i) => i%6===0)
